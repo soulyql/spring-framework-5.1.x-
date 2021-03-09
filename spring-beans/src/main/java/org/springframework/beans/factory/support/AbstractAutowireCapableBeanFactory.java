@@ -509,6 +509,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			instanceWrapper = this.factoryBeanInstanceCache.remove(beanName);
 		}
 		if (instanceWrapper == null) {
+			// 开始通过反射创建bean
 			instanceWrapper = createBeanInstance(beanName, mbd, args);
 		}
 		Object bean = instanceWrapper.getWrappedInstance();
@@ -522,9 +523,18 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			if (!mbd.postProcessed) {
 				try {
 					// 第三次执行后置处理器，缓存bean的注解元数据信息(用于后面在进行属性填充时使用)
-					// 这一步对于CommonAnnotationBeanPostProcessor、AutowiredAnnotationBeanPostProcessor、RequiredAnnotationBeanPostProcessor这一类处理器
-					// 主要是将bean的注解信息解析出来，然后缓存到后置处理器中的injectionMetadataCache属性中
-					// 而对于ApplicationListenerDetector处理器，而是将bean是否是单例的标识存于singletonNames这个Map类型的属性中
+					// 这一步调用
+					// CommonAnnotationBeanPostProcessor# postProcessMergedBeanDefinition方法
+					// ----- 主要解析bean上定义的进行@PostConstruct 和 @PreDestroy 方法 保存在LifecycleMetadata对象中
+					// ----- 解析bean中属性或方法上的@Resourece注解 保存在InjectionMetadata对象中 、并未进行属性注入
+
+					// AutowiredAnnotationBeanPostProcessor# postProcessMergedBeanDefinition方法
+					// ----- 主要解析bean中 字段或方法上定义的@Autowired注解 保存在InjectionMetadata对象中
+					
+					// ApplicationListenerDetector# postProcessMergedBeanDefinition方法
+					// ----- 这个类凑热闹的、 这里没有进行任何扫描工作、 只是记录了容器中的 bean 是否是单例模式.
+					// ----- 这里记录这个标志, 是为了后面用的. 对监听器进行过滤用的.
+					//
 					applyMergedBeanDefinitionPostProcessors(mbd, beanType, beanName);
 				}
 				catch (Throwable ex) {
@@ -1034,6 +1044,10 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 */
 	protected void applyMergedBeanDefinitionPostProcessors(RootBeanDefinition mbd, Class<?> beanType, String beanName) {
 		for (BeanPostProcessor bp : getBeanPostProcessors()) {
+			// 满足条件的只有三个
+			// 1.CommonAnnotationBeanPostProcessor
+			// 2.AutowiredAnnotationBeanPostProcessor
+			// 3.ApplicationListenerDetector
 			if (bp instanceof MergedBeanDefinitionPostProcessor) {
 				MergedBeanDefinitionPostProcessor bdp = (MergedBeanDefinitionPostProcessor) bp;
 				bdp.postProcessMergedBeanDefinition(mbd, beanType, beanName);

@@ -12,11 +12,7 @@ public class TestMain {
 	public static void main(String[] args) {
 		AnnotationConfigApplicationContext annotationConfigApplicationContext
 				= new AnnotationConfigApplicationContext(TestConfig.class);
-		//TestController bean = annotationConfigApplicationContext.getBean(TestController.class);
-		//ProxyInterface bean1 = annotationConfigApplicationContext.getBean(ProxyInterface.class);
 		TranslationController translationController = annotationConfigApplicationContext.getBean(TranslationController.class);
 		translationController.test();
-		//bean1.index();
-		//bean.test();
 	}
 }
